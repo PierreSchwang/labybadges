@@ -10,7 +10,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -28,12 +27,15 @@ type DownloadsResponse struct {
 func Downloads(w http.ResponseWriter, r *http.Request) {
 	namespace := r.URL.Query().Get("namespace")
 	style := r.URL.Query().Get("style")
-	acceptLanguageHeader := r.Header.Get("Accept-Language")
-	lang := "en"
 
-	if acceptLanguageHeader != "" {
-		lang = strings.Split(strings.Split(acceptLanguageHeader, ",")[0], "-")[0]
-	}
+	// shields.io does not pass the header through
+	// acceptLanguageHeader := r.Header.Get("Accept-Language")
+
+	// if acceptLanguageHeader != "" {
+	//	lang = strings.Split(strings.Split(acceptLanguageHeader, ",")[0], "-")[0]
+	// }
+
+	lang := "de"
 
 	response, err := http.Get(fmt.Sprintf(GetModificationEndpoint, namespace))
 	if err != nil {
