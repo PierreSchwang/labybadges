@@ -64,7 +64,7 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 		result.Message = strconv.Itoa(rounded)
 	} else if style == "formatted" {
 		result.Message = printer.Sprintf("%d", addon.Downloads)
-	} else if style == "formatted+rounded" || style == "rounded+formatted" {
+	} else if style == "formatted_rounded" || style == "rounded_formatted" {
 		result.Message = printer.Sprintf("%d", rounded)
 	}
 
