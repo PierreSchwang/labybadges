@@ -1,4 +1,4 @@
-package downloads
+package api
 
 import (
 	"encoding/json"
@@ -17,10 +17,6 @@ const (
 	GetModificationEndpoint = "https://flintmc.net/api/client-store/get-modification/-/%s"
 )
 
-var (
-	FallbackLanguage = language.German
-)
-
 type DownloadsResponse struct {
 	Formatted           string `json:"formatted"`
 	Rounded             string `json:"rounded"`
@@ -30,17 +26,12 @@ type DownloadsResponse struct {
 
 func Downloads(w http.ResponseWriter, r *http.Request) {
 	namespace := r.URL.Query().Get("namespace")
+	style := r.URL.Query().Get("style")
 	acceptLanguageHeader := r.Header.Get("Accept-Language")
 	lang := "en"
 
 	if acceptLanguageHeader != "" {
 		lang = strings.Split(strings.Split(acceptLanguageHeader, ",")[0], "-")[0]
-	}
-
-	fmt.Println(r.URL.Query())
-
-	if lang == "" {
-		lang = FallbackLanguage.String()
 	}
 
 	response, err := http.Get(fmt.Sprintf(GetModificationEndpoint, namespace))
@@ -59,11 +50,20 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 	downloadDigits := len(strconv.Itoa(addon.Downloads))
 	divisor := math.Pow(10, math.Max(1, float64(downloadDigits-2)))
 	rounded := int(math.Round(math.Floor(float64(addon.Downloads)/divisor)) * divisor)
+
+	result := typing.ShieldResponse{
+		SchemaVersion: 1,
+		Label:         "Downloads",
+		Message:       strconv.Itoa(addon.Downloads),
+	}
+	if style == "rounded" {
+		result.Message = strconv.Itoa(rounded)
+	} else if style == "formatted" {
+		result.Message = printer.Sprintf("%d", addon.Downloads)
+	} else if style == "formatted+rounded" || style == "rounded+formatted" {
+		result.Message = printer.Sprintf("%d", rounded)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(DownloadsResponse{
-		Formatted:           printer.Sprintf("%d", addon.Downloads),
-		Rounded:             strconv.Itoa(rounded),
-		FormattedAndRounded: printer.Sprintf("%d", rounded),
-		Raw:                 strconv.Itoa(addon.Downloads),
-	})
+	_ = json.NewEncoder(w).Encode(result)
 }
