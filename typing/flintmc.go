@@ -1,4 +1,4 @@
-package labybadges
+package typing
 
 type Addon struct {
 	Id               int    `json:"id"`
