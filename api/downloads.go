@@ -15,6 +15,7 @@ import (
 
 const (
 	GetModificationEndpoint = "https://flintmc.net/api/client-store/get-modification/-/%s"
+	LabyBlue                = "#0a56a5"
 )
 
 type DownloadsResponse struct {
@@ -55,6 +56,7 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 		SchemaVersion: 1,
 		Label:         "Downloads",
 		Message:       strconv.Itoa(addon.Downloads),
+		Color:         LabyBlue,
 	}
 	if style == "rounded" {
 		result.Message = strconv.Itoa(rounded)
