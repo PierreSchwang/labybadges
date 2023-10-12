@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	GetModificationEndpoint = "https://flintmc.net/api/client-store/get-modification/-/%s"
+	GetModificationEndpoint = "https://flintmc.net/api/client-store/get-modification/%s/%s"
 	LabyBlue                = "#0a56a5"
 )
 
@@ -27,6 +27,7 @@ type DownloadsResponse struct {
 func Downloads(w http.ResponseWriter, r *http.Request) {
 	namespace := r.URL.Query().Get("namespace")
 	style := r.URL.Query().Get("style")
+	version := r.URL.Query().Get("version")
 
 	// shields.io does not pass the header through
 	// acceptLanguageHeader := r.Header.Get("Accept-Language")
@@ -37,7 +38,10 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 
 	lang := "de"
 
-	response, err := http.Get(fmt.Sprintf(GetModificationEndpoint, namespace))
+	if version == "" {
+		version = "1.20"
+	}
+	response, err := http.Get(fmt.Sprintf(GetModificationEndpoint, version, namespace))
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(500)
