@@ -9,12 +9,15 @@ import (
 	"labybadges/typing"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
 const (
 	GetModificationEndpoint = "https://flintmc.net/api/client-store/get-modification/%s/%s"
 	LabyBlue                = "#0a56a5"
+	ShieldsEndpoint         = "https://img.shields.io/badge/%s-%s-%s?%s"
+	ShieldLabelDownloads    = "Downloads"
 )
 
 type DownloadsResponse struct {
@@ -25,9 +28,11 @@ type DownloadsResponse struct {
 }
 
 func Downloads(w http.ResponseWriter, r *http.Request) {
-	namespace := r.URL.Query().Get("namespace")
-	style := r.URL.Query().Get("style")
-	version := r.URL.Query().Get("version")
+	query := r.URL.Query()
+	namespace := query.Get("namespace")
+	style := query.Get("style")
+	version := query.Get("version")
+	color := query.Get("color")
 
 	// shields.io does not pass the header through
 	// acceptLanguageHeader := r.Header.Get("Accept-Language")
@@ -41,6 +46,10 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 	if version == "" {
 		version = "1.20"
 	}
+	if color == "" {
+		color = LabyBlue
+	}
+	color = url.QueryEscape(color)
 	response, err := http.Get(fmt.Sprintf(GetModificationEndpoint, version, namespace))
 	if err != nil {
 		fmt.Println(err)
@@ -72,6 +81,27 @@ func Downloads(w http.ResponseWriter, r *http.Request) {
 		result.Message = printer.Sprintf("%d", rounded)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(result)
+	// Build the shields.io url
+	parameters := ""
+	for s := range query {
+		if s == "namespace" || s == "style" || s == "version" {
+			continue
+		}
+		parameters += s + "=" + url.QueryEscape(query.Get(s))
+	}
+
+	svg, err := http.Get(fmt.Sprintf(
+		ShieldsEndpoint,
+		ShieldLabelDownloads,
+		result.Message,
+		color,
+		parameters,
+	))
+	if err != nil {
+		_, _ = fmt.Fprint(w, "Failed to get shields icon")
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/svg+xml")
+	_, _ = io.Copy(w, svg.Body)
 }
